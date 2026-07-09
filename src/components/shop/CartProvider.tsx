@@ -39,14 +39,24 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 const EMPTY_STATE: CartState = { items: [], subtotal: 0, count: 0 };
 
+// This static preview build has no backend — /api/cart doesn't exist here,
+// so every call below fails soft and the cart just stays empty.
+async function safeCartRequest(input: RequestInfo, init?: RequestInit): Promise<CartState> {
+  try {
+    const res = await fetch(input, init);
+    if (!res.ok) return EMPTY_STATE;
+    return await res.json();
+  } catch {
+    return EMPTY_STATE;
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<CartState>(EMPTY_STATE);
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const res = await fetch("/api/cart");
-    const data = await res.json();
-    setState(data);
+    setState(await safeCartRequest("/api/cart"));
   }, []);
 
   useEffect(() => {
@@ -54,33 +64,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const addItem = useCallback(async (productId: string, quantity = 1) => {
-    const res = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, quantity }),
-    });
-    const data = await res.json();
-    setState(data);
+    setState(
+      await safeCartRequest("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity }),
+      })
+    );
   }, []);
 
   const updateQuantity = useCallback(async (productId: string, quantity: number) => {
-    const res = await fetch("/api/cart", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId, quantity }),
-    });
-    const data = await res.json();
-    setState(data);
+    setState(
+      await safeCartRequest("/api/cart", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId, quantity }),
+      })
+    );
   }, []);
 
   const removeItem = useCallback(async (productId: string) => {
-    const res = await fetch("/api/cart", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId }),
-    });
-    const data = await res.json();
-    setState(data);
+    setState(
+      await safeCartRequest("/api/cart", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productId }),
+      })
+    );
   }, []);
 
   return (

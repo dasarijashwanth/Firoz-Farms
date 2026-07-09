@@ -2,11 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Leaf, Star, User } from "lucide-react";
 import { db } from "@/lib/db";
-import { auth } from "@/lib/auth";
 import { ProductGallery } from "@/components/shop/ProductGallery";
 import { AddToCartButton } from "@/components/shop/AddToCartButton";
 import { WishlistButton } from "@/components/shop/WishlistButton";
-import { ReviewForm } from "@/components/shop/ReviewForm";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +12,16 @@ import { formatPrice, toPlainNumber } from "@/lib/format";
 
 interface ProductPageProps {
   params: Promise<{ category: string; slug: string }>;
+}
+
+export async function generateStaticParams() {
+  const products = await db.product.findMany({
+    include: { category: true },
+  });
+  return products.map((product) => ({
+    category: product.category.slug,
+    slug: product.slug,
+  }));
 }
 
 export async function generateMetadata({ params }: ProductPageProps) {
@@ -45,12 +53,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product || product.category.slug !== categorySlug) notFound();
 
-  const session = await auth();
-  const isWishlisted = session?.user
-    ? !!(await db.wishlistItem.findUnique({
-        where: { userId_productId: { userId: session.user.id, productId: product.id } },
-      }))
-    : false;
+  // Static preview build: no session context available, so wishlist/reviews
+  // always render in their signed-out state here.
+  const isWishlisted = false;
 
   const relatedProducts = await db.product.findMany({
     where: { categoryId: product.categoryId, id: { not: product.id }, isActive: true },
@@ -252,21 +257,15 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
         <div className="mt-8 max-w-lg">
           <h3 className="font-heading text-base font-semibold text-foreground">
-            {session?.user ? "Write a Review" : "Sign in to write a review"}
+            Sign in to write a review
           </h3>
-          {session?.user ? (
-            <div className="mt-3">
-              <ReviewForm productId={product.id} />
-            </div>
-          ) : (
-            <Button
-              render={<Link href="/login" />}
-              variant="outline"
-              className="mt-3 font-button"
-            >
-              Sign In
-            </Button>
-          )}
+          <Button
+            render={<Link href="/login" />}
+            variant="outline"
+            className="mt-3 font-button"
+          >
+            Sign In
+          </Button>
         </div>
       </div>
 

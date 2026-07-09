@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 
 // `max` is kept low because the local `prisma dev` Postgres instance has a
 // small connection ceiling — each Next.js build/dev worker gets its own pool.
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, max: 3 });
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL, max: 2 });
 
 export const db =
   globalForPrisma.prisma ??

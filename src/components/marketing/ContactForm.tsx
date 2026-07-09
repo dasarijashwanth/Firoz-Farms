@@ -1,17 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { submitContactForm, type ContactActionState } from "@/actions/contact.actions";
-
-const initialState: ContactActionState = { status: "idle" };
 
 export function ContactForm() {
-  const [state, formAction, isPending] = useActionState(submitContactForm, initialState);
+  const [message, setMessage] = useState<string | null>(null);
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
@@ -23,7 +20,13 @@ export function ContactForm() {
         day.
       </p>
 
-      <form action={formAction} className="mt-6 flex flex-col gap-5">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setMessage("This is a static preview — sending a message runs on the deployed app.");
+        }}
+        className="mt-6 flex flex-col gap-5"
+      >
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Name</Label>
@@ -66,24 +69,14 @@ export function ContactForm() {
 
         <Button
           type="submit"
-          disabled={isPending}
           size="lg"
           className="w-full bg-organic-green font-button text-white hover:bg-organic-green-dark sm:w-fit"
         >
           <Send data-icon="inline-start" />
-          {isPending ? "Sending…" : "Send Message"}
+          Send Message
         </Button>
 
-        {state.status !== "idle" && (
-          <p
-            role="status"
-            className={`font-sans text-sm ${
-              state.status === "success" ? "text-organic-green" : "text-destructive"
-            }`}
-          >
-            {state.message}
-          </p>
-        )}
+        {message && <p role="status" className="font-sans text-sm text-muted-foreground">{message}</p>}
       </form>
     </div>
   );

@@ -11,6 +11,11 @@ interface RecipePageProps {
   params: Promise<{ slug: string }>;
 }
 
+export async function generateStaticParams() {
+  const recipes = await db.recipe.findMany({ where: { isPublished: true }, select: { slug: true } });
+  return recipes.map((recipe) => ({ slug: recipe.slug }));
+}
+
 export async function generateMetadata({
   params,
 }: RecipePageProps): Promise<Metadata> {

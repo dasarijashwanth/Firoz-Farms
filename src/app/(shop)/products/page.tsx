@@ -9,35 +9,21 @@ export const metadata = {
     "Browse farm-fresh milk, dairy, eggs, honey, organic produce, grains and gift boxes from Firoz Farms.",
 };
 
-interface ProductsPageProps {
-  searchParams: Promise<{ sort?: string }>;
-}
-
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const { sort } = await searchParams;
+export default async function ProductsPage() {
+  // Static preview build: sort-by-query-param needs a server, so this page
+  // always renders the newest-first ordering baked in at build time.
+  const sort = "newest";
 
   const [categories, products] = await Promise.all([
     db.category.findMany({ orderBy: { sortOrder: "asc" } }),
     db.product.findMany({
       where: { isActive: true },
       include: { category: true, images: { orderBy: { sortOrder: "asc" }, take: 1 } },
-      orderBy:
-        sort === "price-asc"
-          ? { price: "asc" }
-          : sort === "price-desc"
-            ? { price: "desc" }
-            : sort === "rating"
-              ? { avgRating: "desc" }
-              : { createdAt: "desc" },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
-  const sortOptions = [
-    { value: "newest", label: "Newest" },
-    { value: "price-asc", label: "Price: Low to High" },
-    { value: "price-desc", label: "Price: High to Low" },
-    { value: "rating", label: "Top Rated" },
-  ];
+  const sortOptions = [{ value: "newest", label: "Newest" }];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
